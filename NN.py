@@ -207,3 +207,26 @@ test_loader = torch.utils.data.DataLoader(test_data, batch_size=1, shuffle=True)
 # required for encoding
 kernel_shape = model.conv1.kernel_size
 stride = model.conv1.stride[0]
+
+
+
+## Encryption Parameters
+
+# controls precision of the fractional part
+bits_scale = 26
+
+# Create TenSEAL context
+context = ts.context(
+    ts.SCHEME_TYPE.CKKS,
+    poly_modulus_degree=8192,
+    coeff_mod_bit_sizes=[31, bits_scale, bits_scale, bits_scale, bits_scale, bits_scale, bits_scale, 31]
+)
+
+# set the scale
+context.global_scale = pow(2, bits_scale)
+
+# galois keys are required to do ciphertext rotations
+context.generate_galois_keys()
+
+enc_model = EncConvNet(model)
+enc_test(context, enc_model, test_loader, criterion, kernel_shape, stride)
